@@ -9,6 +9,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // migrate/seed/db:push ใช้ direct connection (port 5432) เลี่ยง pgbouncer
+    // ถ้าไม่มี DIRECT_URL ใช้ DATABASE_URL แทน
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });

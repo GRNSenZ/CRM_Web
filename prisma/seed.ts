@@ -1,12 +1,14 @@
+import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import bcrypt from "bcryptjs";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { parseWorkbook, importWorkbook } from "../app/lib/import-excel";
 
-const url = process.env.DATABASE_URL ?? "file:./dev.db";
-const prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url }) });
+// seed/migrate ใช้ direct (session pooler 5432) เพื่อ bulk insert ได้เสถียร
+const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
 // ไฟล์ Excel ต้นฉบับอยู่ที่โฟลเดอร์แม่ของ crm-web
 const EXCEL = join(process.cwd(), "..", "CRM_โทรติดตามลูกค้า_ลูกค้าขาดฝาก_มิถุนายน.xlsx");
