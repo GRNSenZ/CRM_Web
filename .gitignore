@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # local database (มีข้อมูลลูกค้า/PII — ห้าม commit)
 *.db
