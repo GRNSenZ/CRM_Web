@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eef1f6;
+  --foreground: #1a2238;
+  --navy: #13213f;
+  --gold: #c9a24a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-noto-thai);
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(201, 162, 74, 0.07), transparent),
+    radial-gradient(1000px 500px at -10% 110%, rgba(19, 33, 63, 0.06), transparent),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(201, 162, 74, 0.3);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(19, 33, 63, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(19, 33, 63, 0.4);
+}
+
+/* ===== ธีมรวมทั้งเว็บ: น้ำเงินครามตัดทอง ===== */
+
+/* หัวตารางทุกหน้า */
+main table thead {
+  background: linear-gradient(90deg, #13213f, #20335d) !important;
+}
+main table thead th {
+  color: #e9d6a3 !important;
+  letter-spacing: 0.04em;
+}
+
+/* แถวรวมท้ายตาราง */
+main table tfoot {
+  background: #f5efdd !important;
+}
+main table tfoot td {
+  color: #13213f;
+}
+
+/* หัวข้อหน้า → น้ำเงินคราม */
+main h1 {
+  color: #13213f !important;
+}
+
+/* การ์ด/กล่องขอบมน ให้เงานุ่มดูพรีเมียมขึ้น */
+main .rounded-2xl {
+  box-shadow: 0 1px 2px rgba(19, 33, 63, 0.04), 0 8px 24px -16px rgba(19, 33, 63, 0.18);
 }

@@ -1,65 +1,94 @@
-import Image from "next/image";
+export const dynamic = "force-dynamic";
 
-export default function Home() {
+import Link from "next/link";
+import AppShell from "@/app/components/AppShell";
+import PeriodFilter from "@/app/components/PeriodFilter";
+import { getBrandStats, sumStats } from "@/app/lib/queries";
+import { resolvePeriod } from "@/app/lib/period";
+import { baht, num, pct } from "@/app/lib/format";
+
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#13213f] to-[#22386a] p-5 text-white ring-1 ring-amber-400/20">
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
+      <p className="text-sm text-slate-300">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-amber-300">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
+    </div>
+  );
+}
+
+export default async function Dashboard(props: PageProps<"/">) {
+  const sp = await props.searchParams;
+  const period = resolvePeriod(sp);
+  const stats = await getBrandStats(period.range);
+  const total = sumStats(stats);
+
+  return (
+    <AppShell>
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">ภาพรวมทั้งหมด</h1>
+          <p className="text-sm text-zinc-500">
+            สรุปผลการติดตามลูกค้าขาดฝากทุกเว็บ · ช่วง <b className="text-zinc-700">{period.label}</b>
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        <PeriodFilter mode={period.mode} value={period.value} today={period.today} rangeFrom={period.rangeFrom} rangeTo={period.rangeTo} options={period.options} />
+      </header>
+
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Stat label="การติดตามทั้งหมด" value={num(total.calls)} sub={`${num(total.totalCustomers)} ลูกค้า`} />
+        <Stat label="รับสาย" value={`${num(total.answered)}`} sub={`รับสาย ${pct(total.answeredPct)}`} />
+        <Stat label="ยอดกลับมาฝาก" value={`฿${baht(total.totalDeposit)}`} sub={`${num(total.returnedCustomers)} คนกลับมาฝาก`} />
+        <Stat label="โบนัสที่เติม" value={`฿${baht(total.totalBonus)}`} sub={`คิดเป็น ${pct(total.bonusPerDeposit)} ของยอดฝาก`} />
+      </div>
+
+      <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
+        <table className="w-full text-sm">
+          <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+            <tr>
+              <th className="px-4 py-3 font-semibold">เว็บ</th>
+              <th className="px-4 py-3 text-right font-semibold">ติดตาม</th>
+              <th className="px-4 py-3 text-right font-semibold">รับสาย</th>
+              <th className="px-4 py-3 text-right font-semibold">รับสาย %</th>
+              <th className="px-4 py-3 text-right font-semibold">กลับมาฝาก/คน</th>
+              <th className="px-4 py-3 text-right font-semibold">ยอดกลับมาฝาก</th>
+              <th className="px-4 py-3 text-right font-semibold">โบนัส</th>
+              <th className="px-4 py-3 text-right font-semibold">โบนัส/ฝาก %</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {stats.map((s) => (
+              <tr key={s.brandId} className="hover:bg-zinc-50">
+                <td className="px-4 py-3 font-medium">
+                  <Link href={`/brands/${s.brandId}`} className="text-indigo-600 hover:underline">
+                    {s.brand}
+                  </Link>
+                </td>
+                <td className="px-4 py-3 text-right">{num(s.calls)}</td>
+                <td className="px-4 py-3 text-right">{num(s.answered)}</td>
+                <td className="px-4 py-3 text-right">{pct(s.answeredPct)}</td>
+                <td className="px-4 py-3 text-right">{num(s.returnedCustomers)}</td>
+                <td className="px-4 py-3 text-right">฿{baht(s.totalDeposit)}</td>
+                <td className="px-4 py-3 text-right">฿{baht(s.totalBonus)}</td>
+                <td className="px-4 py-3 text-right">{pct(s.bonusPerDeposit)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="border-t-2 border-zinc-200 bg-zinc-50 font-semibold">
+            <tr>
+              <td className="px-4 py-3">รวม</td>
+              <td className="px-4 py-3 text-right">{num(total.calls)}</td>
+              <td className="px-4 py-3 text-right">{num(total.answered)}</td>
+              <td className="px-4 py-3 text-right">{pct(total.answeredPct)}</td>
+              <td className="px-4 py-3 text-right">{num(total.returnedCustomers)}</td>
+              <td className="px-4 py-3 text-right">฿{baht(total.totalDeposit)}</td>
+              <td className="px-4 py-3 text-right">฿{baht(total.totalBonus)}</td>
+              <td className="px-4 py-3 text-right">{pct(total.bonusPerDeposit)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </AppShell>
   );
 }

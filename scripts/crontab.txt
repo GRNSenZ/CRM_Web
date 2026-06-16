@@ -1,0 +1,30 @@
+# ===== CRM แจ้งเตือน Telegram — ตารางเวลา cron =====
+# เวลาทั้งหมดอิงเขตเวลาของเครื่อง (ควรตั้งเครื่องเป็น Asia/Bangkok)
+# ติดตั้ง:  crontab scripts/crontab.txt   (หรือ crontab -e แล้ววางทับ)
+# ดูที่ตั้งไว้: crontab -l   |   ลบทั้งหมด: crontab -r
+#
+# 🍎 บน macOS ที่โปรเจกต์อยู่ใน ~/Desktop: ไฟล์นี้ "จะไม่ทำงาน" กับ cron daemon
+#    เพราะ TCC บล็อกการเข้าถึง Desktop (Operation not permitted) → ใช้ launchd แทน:
+#       ./scripts/launchd/install.sh load
+#    (launchd installer ย้าย launcher/log ออกนอก Desktop ให้อัตโนมัติ)
+#    ถ้ายืนยันจะใช้ crontab จริง ต้องไป System Settings → Privacy & Security →
+#    Full Disk Access แล้วเพิ่ม /usr/sbin/cron
+#    ไฟล์ crontab นี้เหมาะกับ Linux/เซิร์ฟเวอร์ หรือโปรเจกต์ที่อยู่นอกโฟลเดอร์ป้องกัน
+#
+# ⚠️ แก้ /ABSOLUTE/PATH/TO ให้เป็นพาธจริงของโปรเจกต์ก่อนติดตั้ง
+#    (เครื่องนี้คือ /Users/grnsenz/Desktop/CRM/crm-web)
+#
+# รูปแบบ:  นาที  ชั่วโมง  วันที่  เดือน  วันในสัปดาห์  คำสั่ง
+# ──────────────────────────────────────────────────────────
+
+# 📅 สรุปวันนี้ → กลุ่มทีม  (ทุกวัน 20:00)
+0 20 * * *   /ABSOLUTE/PATH/TO/crm-web/scripts/cron-ping.sh daily-summary
+
+# 🗓️ สรุปสัปดาห์ก่อน → กลุ่มหัวหน้า  (จันทร์ 08:00)
+0 8 * * 1    /ABSOLUTE/PATH/TO/crm-web/scripts/cron-ping.sh weekly-summary
+
+# ☀️ คิวงานเช้า → กลุ่มทีม  (จันทร์–ศุกร์ 09:00)
+0 9 * * 1-5  /ABSOLUTE/PATH/TO/crm-web/scripts/cron-ping.sh morning-queue
+
+# 🐢 ใครโทรน้อยกว่าเกณฑ์ → กลุ่มหัวหน้า  (จันทร์–ศุกร์ 13:00)
+0 13 * * 1-5 /ABSOLUTE/PATH/TO/crm-web/scripts/cron-ping.sh slow-day-alert
