@@ -179,7 +179,7 @@ export default async function CustomerPage(props: PageProps<"/customers/[id]">) 
             <ConfirmButton
               tone="amber"
               message="ต้องการบันทึกการปรับโบนัสนี้ใช่ไหม?"
-              className="w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+              className="w-full rounded-lg bg-amber-400 py-2 text-sm font-semibold text-white hover:bg-amber-500"
             >
               บันทึก
             </ConfirmButton>

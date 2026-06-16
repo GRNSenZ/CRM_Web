@@ -59,13 +59,13 @@ export default async function BrandsPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#0f3a2a] to-[#1d5a42] text-xl text-amber-300 shadow-md ring-1 ring-amber-400/20">
                 🌐
               </div>
-              <span className="text-lg text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-amber-500">
+              <span className="text-lg text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-amber-400">
                 →
               </span>
             </div>
             <h2 className="mt-4 text-lg font-bold text-[#0f3a2a]">{b.name}</h2>
             <p className="mt-0.5 flex items-center gap-1 text-sm text-zinc-500">
-              <span className="font-semibold text-amber-600">{num(b._count.customers)}</span> ลูกค้า
+              <span className="font-semibold text-amber-500">{num(b._count.customers)}</span> ลูกค้า
             </p>
           </Link>
         ))}

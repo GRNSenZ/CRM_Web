@@ -73,7 +73,7 @@ export default async function SummaryPage(props: PageProps<"/summary">) {
         <BarChart
           title="💰 ยอดกลับมาฝากรายเว็บ"
           data={stats.map((s) => ({ label: s.brand, value: Math.round(s.totalDeposit) }))}
-          accent="#c8a24a"
+          accent="#d9c084"
           unit=" ฿"
         />
       </div>

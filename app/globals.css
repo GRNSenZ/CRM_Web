@@ -4,7 +4,7 @@
   --background: #eef1f6;
   --foreground: #13332a;
   --navy: #0f3a2a;
-  --gold: #c9a24a;
+  --gold: #d9c084;
 }
 
 @theme inline {
@@ -15,14 +15,14 @@
 
 body {
   background:
-    radial-gradient(1200px 600px at 100% -10%, rgba(201, 162, 74, 0.07), transparent),
+    radial-gradient(1200px 600px at 100% -10%, rgba(217, 192, 132, 0.07), transparent),
     radial-gradient(1000px 500px at -10% 110%, rgba(15, 58, 42, 0.06), transparent),
     var(--background);
   color: var(--foreground);
 }
 
 ::selection {
-  background: rgba(201, 162, 74, 0.3);
+  background: rgba(217, 192, 132, 0.3);
 }
 
 ::-webkit-scrollbar {
@@ -44,7 +44,7 @@ main table thead {
   background: linear-gradient(90deg, #0f3a2a, #1d5a42) !important;
 }
 main table thead th {
-  color: #e9d6a3 !important;
+  color: #f1e7c9 !important;
   letter-spacing: 0.04em;
 }
 

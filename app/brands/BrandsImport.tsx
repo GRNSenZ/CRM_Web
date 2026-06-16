@@ -308,7 +308,7 @@ export default function BrandsImport({
                   {preview.perBrand.map((b, i) => (
                     <tr key={i}>
                       <td className="px-2 py-2 font-medium">
-                        {b.brand} {!b.brandExists && <span className="text-amber-600">(ใหม่)</span>}
+                        {b.brand} {!b.brandExists && <span className="text-amber-500">(ใหม่)</span>}
                       </td>
                       <td className="px-2 py-2 text-right">{b.rows.toLocaleString("th-TH")}</td>
                       <td className="px-2 py-2 text-right font-semibold text-green-700">

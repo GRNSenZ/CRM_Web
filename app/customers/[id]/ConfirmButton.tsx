@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 const TONE: Record<string, string> = {
   indigo: "bg-indigo-600 hover:bg-indigo-700",
   green: "bg-green-600 hover:bg-green-700",
-  amber: "bg-amber-500 hover:bg-amber-600",
+  amber: "bg-amber-400 hover:bg-amber-500",
   red: "bg-red-600 hover:bg-red-700",
 };
 
