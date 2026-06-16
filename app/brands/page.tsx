@@ -24,7 +24,7 @@ export default async function BrandsPage() {
   return (
     <AppShell>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-wide text-[#13213f]">เว็บ / แบรนด์</h1>
+        <h1 className="text-2xl font-bold tracking-wide text-[#0f3a2a]">เว็บ / แบรนด์</h1>
         <div className="mt-1 h-0.5 w-16 rounded-full bg-gradient-to-r from-amber-400 to-amber-200" />
         <p className="mt-2 text-sm text-zinc-500">เลือกเว็บเพื่อดูรายชื่อลูกค้าและบันทึกการติดตาม</p>
       </header>
@@ -54,16 +54,16 @@ export default async function BrandsPage() {
             className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/70 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:ring-amber-300"
           >
             {/* แถบทองด้านบน */}
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#13213f] via-amber-400 to-[#13213f]" />
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#0f3a2a] via-amber-400 to-[#0f3a2a]" />
             <div className="flex items-start justify-between">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#13213f] to-[#24386a] text-xl text-amber-300 shadow-md ring-1 ring-amber-400/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#0f3a2a] to-[#1d5a42] text-xl text-amber-300 shadow-md ring-1 ring-amber-400/20">
                 🌐
               </div>
               <span className="text-lg text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-amber-500">
                 →
               </span>
             </div>
-            <h2 className="mt-4 text-lg font-bold text-[#13213f]">{b.name}</h2>
+            <h2 className="mt-4 text-lg font-bold text-[#0f3a2a]">{b.name}</h2>
             <p className="mt-0.5 flex items-center gap-1 text-sm text-zinc-500">
               <span className="font-semibold text-amber-600">{num(b._count.customers)}</span> ลูกค้า
             </p>

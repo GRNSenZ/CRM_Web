@@ -9,7 +9,7 @@ import { baht, num, pct } from "@/app/lib/format";
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#13213f] to-[#22386a] p-5 text-white ring-1 ring-amber-400/20">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f3a2a] to-[#1d5a42] p-5 text-white ring-1 ring-amber-400/20">
       <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
       <p className="text-sm text-slate-300">{label}</p>
       <p className="mt-1 text-2xl font-bold text-amber-300">{value}</p>

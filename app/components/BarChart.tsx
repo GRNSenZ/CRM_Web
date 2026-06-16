@@ -2,7 +2,7 @@
 export default function BarChart({
   title,
   data,
-  accent = "#13213f",
+  accent = "#0f3a2a",
   unit = "",
 }: {
   title: string;
@@ -21,7 +21,7 @@ export default function BarChart({
 
   return (
     <div className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
-      <h3 className="mb-3 text-sm font-semibold text-[#13213f]">{title}</h3>
+      <h3 className="mb-3 text-sm font-semibold text-[#0f3a2a]">{title}</h3>
       {data.length === 0 ? (
         <p className="py-6 text-center text-sm text-zinc-400">ไม่มีข้อมูลในช่วงนี้</p>
       ) : (

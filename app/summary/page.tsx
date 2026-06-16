@@ -67,7 +67,7 @@ export default async function SummaryPage(props: PageProps<"/summary">) {
         <BarChart
           title="📞 การติดตามรายเว็บ"
           data={stats.map((s) => ({ label: s.brand, value: s.calls }))}
-          accent="#13213f"
+          accent="#0f3a2a"
           unit=" สาย"
         />
         <BarChart

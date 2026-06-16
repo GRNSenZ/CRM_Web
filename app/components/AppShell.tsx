@@ -13,7 +13,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-60 flex-col bg-gradient-to-b from-[#13213f] via-[#0e1932] to-[#0a1226] text-slate-300 shadow-xl">
+      <aside className="flex w-60 flex-col bg-gradient-to-b from-[#0f3a2a] via-[#0a2c20] to-[#06201a] text-slate-300 shadow-xl">
         <div className="border-b border-amber-400/15 px-5 py-5">
           <Link href="/" className="block">
             <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-lg font-bold tracking-wide text-transparent">

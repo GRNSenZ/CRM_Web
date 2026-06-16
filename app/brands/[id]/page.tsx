@@ -20,7 +20,7 @@ const statusBadge: Record<string, string> = {
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-[#13213f] to-[#22386a] p-4 text-white ring-1 ring-amber-400/20">
+    <div className="rounded-2xl bg-gradient-to-br from-[#0f3a2a] to-[#1d5a42] p-4 text-white ring-1 ring-amber-400/20">
       <p className="text-xs text-slate-300">{label}</p>
       <p className="mt-0.5 text-xl font-bold text-amber-300">{value}</p>
       {sub && <p className="text-xs text-slate-400">{sub}</p>}

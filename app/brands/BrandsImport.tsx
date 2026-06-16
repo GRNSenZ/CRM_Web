@@ -131,7 +131,7 @@ export default function BrandsImport({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-zinc-50"
       >
-        <span className="flex items-center gap-2 font-semibold text-[#13213f]">
+        <span className="flex items-center gap-2 font-semibold text-[#0f3a2a]">
           📥 นำเข้า / อัปเดตข้อมูล
           <span className="text-xs font-normal text-zinc-400">เพิ่ม/อัปเดตข้อมูลโดยไม่ลบของเดิม</span>
         </span>

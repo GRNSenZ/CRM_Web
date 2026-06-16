@@ -9,13 +9,13 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, initial);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0c1428] via-[#13213f] to-[#0c1428] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#082319] via-[#0f3a2a] to-[#082319] px-4">
       <div className="w-full max-w-sm rounded-2xl border-t-2 border-amber-400/60 bg-white p-8 shadow-2xl ring-1 ring-amber-400/10">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#13213f] to-[#22386a] text-xl text-amber-300 shadow-md ring-1 ring-amber-400/30">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#0f3a2a] to-[#1d5a42] text-xl text-amber-300 shadow-md ring-1 ring-amber-400/30">
             ✦
           </div>
-          <h1 className="text-xl font-bold text-[#13213f]">CRM ติดตามลูกค้า</h1>
+          <h1 className="text-xl font-bold text-[#0f3a2a]">CRM ติดตามลูกค้า</h1>
           <p className="mt-1 text-sm text-zinc-500">ลูกค้าขาดฝาก</p>
         </div>
         <form action={formAction} className="space-y-4">
@@ -44,7 +44,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-lg bg-gradient-to-r from-[#13213f] to-[#22386a] py-2.5 text-sm font-semibold text-amber-200 ring-1 ring-amber-400/30 transition hover:from-[#1a2c50] hover:to-[#2a4170] disabled:opacity-50"
+            className="w-full rounded-lg bg-gradient-to-r from-[#0f3a2a] to-[#1d5a42] py-2.5 text-sm font-semibold text-amber-200 ring-1 ring-amber-400/30 transition hover:from-[#144632] hover:to-[#216348] disabled:opacity-50"
           >
             {pending ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
           </button>
