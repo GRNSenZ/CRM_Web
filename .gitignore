@@ -33,9 +33,19 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local database (มีข้อมูลลูกค้า/PII — ห้าม commit)
+*.db
+*.db-journal
+/data/
+
+# runtime logs
+*.log
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma

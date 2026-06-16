@@ -1,0 +1,203 @@
+// CRM ติดตามลูกค้าขาดฝาก — Prisma schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// ผู้ใช้งานระบบ — บทบาท: owner | partner | head | admin | member
+model User {
+  id            Int        @id @default(autoincrement())
+  username      String     @unique
+  password      String
+  name          String
+  role          String     @default("member") // owner|partner|head|admin|member
+  phone         String?    @unique
+  email         String?    @unique
+  emailVerified Boolean    @default(false)
+  active        Boolean    @default(true)
+  createdById   Int? // ใครเป็นคนสร้างบัญชีนี้ (null = สมัครเองหน้าเว็บ)
+  createdBy     User?      @relation("UserCreator", fields: [createdById], references: [id])
+  createdUsers  User[]     @relation("UserCreator")
+  createdAt     DateTime   @default(now())
+  followUps     FollowUp[]
+  statusChanges StatusChangeLog[]
+  auditLogs     AuditLog[]
+  smsBatches    SmsBatch[]
+}
+
+/// การส่ง SMS หนึ่งครั้ง (ทีละเบอร์/กลุ่ม/อัปโหลดไฟล์)
+model SmsBatch {
+  id          Int          @id @default(autoincrement())
+  body        String
+  source      String // "single" | "group" | "file"
+  total       Int
+  sentCount   Int          @default(0)
+  failedCount Int          @default(0)
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+  createdById Int?
+  createdAt   DateTime     @default(now())
+  messages    SmsMessage[]
+
+  @@index([createdAt])
+}
+
+/// ผู้รับแต่ละเบอร์ในการส่ง SMS
+model SmsMessage {
+  id        Int      @id @default(autoincrement())
+  batch     SmsBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId   Int
+  phone     String
+  status    String // "mock" | "sent" | "failed"
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([batchId])
+}
+
+/// บันทึกการตรวจสอบ: ใครทำอะไร เมื่อไหร่ จากค่าไหนเป็นค่าไหน
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  action    String // เช่น "customer.status_change", "bonus.create"
+  entity    String // เช่น "Customer", "User"
+  entityId  Int
+  before    String? // JSON ค่าเดิม (เฉพาะ field ที่เปลี่ยน)
+  after     String? // JSON ค่าใหม่
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+/// ประวัติการเปลี่ยนสถานะลูกค้า (เช่น ตั้ง/ปลดห้ามโทร)
+model StatusChangeLog {
+  id          Int      @id @default(autoincrement())
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId  Int
+  fromStatus  String
+  toStatus    String
+  reason      String?
+  changedBy   User?    @relation(fields: [changedById], references: [id])
+  changedById Int?
+  createdAt   DateTime @default(now())
+
+  @@index([customerId])
+}
+
+/// การสมัครสมาชิกที่ยังทำไม่เสร็จ (เก็บสถานะ + รหัสยืนยันระหว่างขั้นตอน)
+model PendingSignup {
+  id            Int      @id @default(autoincrement())
+  username      String
+  phone         String
+  phoneCode     String
+  phoneVerified Boolean  @default(false)
+  passwordHash  String?
+  email         String?
+  emailCode     String?
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([phone])
+  @@index([expiresAt])
+}
+
+/// เว็บ/แบรนด์ (เป๋าตุง168, หวยพลัส, ...)
+model Brand {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  customers Customer[]
+}
+
+/// ลูกค้าที่ขาดการฝาก (1 เบอร์ = 1 ราย ต่อเว็บ)
+model Customer {
+  id              Int               @id @default(autoincrement())
+  phone           String
+  name            String?
+  brand           Brand             @relation(fields: [brandId], references: [id])
+  brandId         Int
+  status          String            @default("active") // "active" | "do_not_call"
+  nextCallAt      DateTime? // นัดโทรครั้งถัดไป (เวลา UTC)
+  createdAt       DateTime          @default(now())
+  followUps       FollowUp[]
+  dailyActivities DailyActivity[]
+  bonuses         BonusAdjustment[]
+  statusLogs      StatusChangeLog[]
+
+  @@unique([brandId, phone])
+  @@index([brandId])
+  @@index([nextCallAt])
+  @@index([status])
+}
+
+/// บันทึกการโทร/ติดตามแต่ละครั้ง
+model FollowUp {
+  id            Int      @id @default(autoincrement())
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId    Int
+  agent         User?    @relation(fields: [agentId], references: [id])
+  agentId       Int?
+  callDate      DateTime
+  callTime      String? // "12:49"
+  status        String   @default("pending") // "answered" | "no_answer" | "pending"
+  smsSent       Boolean  @default(false)
+  smsTemplateId Int? // template SMS ที่ใช้ (ถ้ามี)
+  note          String?
+  createdAt     DateTime @default(now())
+
+  @@index([customerId])
+  @@index([callDate])
+}
+
+/// การกลับมา login + ยอดฝากรายวันหลังติดตาม
+model DailyActivity {
+  id         Int      @id @default(autoincrement())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId Int
+  date       DateTime
+  loggedIn   Boolean  @default(false)
+  deposit    Float    @default(0)
+
+  @@unique([customerId, date])
+  @@index([customerId])
+  @@index([date])
+}
+
+/// ค่าตั้งระบบแจ้งเตือน (chat id, เกณฑ์, เปิด/ปิดรายประเภท) — แก้ได้โดยไม่ต้อง deploy ใหม่
+model NotificationSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
+/// คลังข้อความ SMS (template กลาง)
+model SmsTemplate {
+  id        Int      @id @default(autoincrement())
+  name      String // ชื่อเรียก เช่น "ทวงรัก + โปร 20%"
+  body      String // เนื้อความ มีตัวแปร {{เว็บ}} {{โปร}} {{เบอร์}}
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([sortOrder])
+}
+
+/// การปรับโบนัส 20%
+model BonusAdjustment {
+  id         Int      @id @default(autoincrement())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId Int
+  adjustDate DateTime
+  amount     Float    @default(0)
+  percent    Float    @default(20)
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+}

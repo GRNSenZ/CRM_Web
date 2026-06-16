@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM ติดตามลูกค้าขาดฝาก
 
-## Getting Started
+เว็บแอป CRM สำหรับทีม telesales ใช้ติดตามลูกค้าที่ขาดการฝากของแต่ละเว็บ/แบรนด์
+แปลงมาจากไฟล์ Excel เดิม (`CRM_โทรติดตามลูกค้า_ลูกค้าขาดฝาก_มิถุนายน.xlsx`)
 
-First, run the development server:
+## ความสามารถ
+
+- **เข้าสู่ระบบหลายผู้ใช้** (แอดมิน/พนักงาน) — แต่ละการบันทึกผูกกับชื่อพนักงาน
+- **Dashboard ภาพรวม** — KPI รวมทุกเว็บ + ตารางเทียบรายเว็บ (อัปเดตอัตโนมัติ ไม่ต้องกรอกสรุปเอง)
+- **รายชื่อลูกค้าต่อเว็บ** — ค้นหาเบอร์ + แบ่งหน้า + เห็นสถานะล่าสุด/จำนวนครั้งที่ติดตาม/ยอดกลับมาฝาก
+- **หน้าลูกค้า** — บันทึกการโทร (รับสาย/ไม่รับสาย/SMS/หมายเหตุ), บันทึก Login + ยอดฝากรายวัน, ปรับโบนัส + ประวัติทั้งหมด
+- **หน้าสรุปผล** — เลือกช่วงรายสัปดาห์/รายเดือน/ทั้งหมด เทียบทุกเว็บ
+
+## เทคโนโลยี
+
+Next.js 16 (App Router) · React 19 · TypeScript · Prisma 7 + SQLite · Tailwind v4 · jose (session JWT)
+
+## เริ่มใช้งาน (เครื่องตัวเอง)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd crm-web
+npm install
+npm run db:migrate     # สร้างตาราง (ครั้งแรกครั้งเดียว)
+npm run db:seed        # นำเข้าข้อมูลจาก data/crm_data_extract.json
+npm run dev            # เปิด http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**ผู้ใช้เริ่มต้น**
+- แอดมิน: `admin` / `admin1234`
+- พนักงาน: `agent1` / `agent1234`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> เปลี่ยนรหัสผ่านเริ่มต้นก่อนใช้งานจริง และตั้ง `SESSION_SECRET` ใหม่ใน `.env`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ข้อมูลที่นำเข้า
 
-## Learn More
+จาก Excel เดิมนำเข้าครบ: ลูกค้า **7,297 ราย** (ยุบเบอร์ซ้ำเป็นรายเดียว), การติดตาม **9,116 ครั้ง**,
+Login/ยอดฝากรายวัน **246 รายการ**, ปรับโบนัส **171 รายการ** ใน 9 เว็บ
 
-To learn more about Next.js, take a look at the following resources:
+### ปรับปรุงคุณภาพข้อมูลที่ทำไปแล้ว (เทียบกับ Excel เดิม)
+- เบอร์ซ้ำ → ยุบเป็นลูกค้าเดียวที่มีหลายประวัติการติดตาม
+- เบอร์โทรเก็บเป็นข้อความ เก็บ 0 นำหน้าครบ และแสดงรูปแบบ `08x-xxx-xxxx`
+- รวม `รับสาย`/`ไม่รับสาย` เป็นสถานะเดียว (รับสาย/ไม่รับสาย/ยังไม่โทร) กันกรอกขัดกัน
+- สรุปคำนวณสด ๆ จากฐานข้อมูล (เลิกพิมพ์ตัวเลขสรุปมือ)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> หมายเหตุ: `รับสาย %` คิดจาก (รับสาย ÷ การติดตามทั้งหมด) จึงต่ำกว่าใน Excel เดิมที่หลายแถวยังไม่ได้ติ๊กสถานะ (นับเป็น "ยังไม่โทร")
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## นำเข้า Excel รอบใหม่ (เดือนถัดไป)
 
-## Deploy on Vercel
+1. แปลง .xlsx เป็น JSON → ได้ `data/crm_data_extract.json` (ใช้สคริปต์ดึงข้อมูลเดิม)
+2. ปรับ `YEAR`/`MONTH` ใน `prisma/seed.ts` ให้ตรงเดือน
+3. `npm run db:seed`  *(สคริปต์นี้ล้างข้อมูลเก่าก่อนเสมอ — ระวังถ้ามีการกรอกใหม่ในเว็บแล้ว)*
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy ขึ้นออนไลน์ (ทีมใช้พร้อมกัน)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+SQLite เหมาะกับเครื่องเดียว สำหรับใช้หลายคนออนไลน์แนะนำเปลี่ยนเป็น Postgres:
+
+1. เปิดฐานข้อมูลฟรีที่ [Neon](https://neon.tech) หรือ [Supabase](https://supabase.com)
+2. ใน `prisma/schema.prisma` เปลี่ยน `provider = "postgresql"` และตั้ง `DATABASE_URL`
+3. เปลี่ยน adapter ใน `app/lib/prisma.ts` เป็น `@prisma/adapter-pg`
+4. `prisma migrate deploy` แล้ว deploy ขึ้น [Vercel](https://vercel.com) (ตั้ง `DATABASE_URL` + `SESSION_SECRET` ใน Environment Variables)
+
+ผมช่วยตั้งค่าส่วนนี้ให้ได้ ถ้าพร้อม deploy แล้วบอกได้เลยครับ
