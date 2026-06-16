@@ -2,7 +2,7 @@
 
 ระบบ CRM สำหรับทีม telesales ใช้ติดตามลูกค้าที่ "ขาดการฝาก" ของแต่ละเว็บ/แบรนด์ ให้กลับมาใช้งานอีกครั้ง — แปลงจากไฟล์ Excel เดิมเป็นเว็บแอปเต็มรูปแบบ พร้อมคิวโทร บันทึกผล รายงานวิเคราะห์ ส่ง SMS และแจ้งเตือน Telegram
 
-> 🔗 **Live demo:** _(กำลังเตรียม deploy — รอบถัดไป)_
+> 🔗 **Live demo:** https://crm-web-tawny-iota.vercel.app
 > บัญชีทดสอบ: `owner / owner1234` · `admin / admin1234` · `agent1 / agent1234`
 
 ---
@@ -118,10 +118,14 @@ scripts/              สคริปต์ติดตั้ง cron (crontab +
 
 ---
 
-## 🌐 Deploy ขึ้นออนไลน์
+## 🌐 Deploy ขึ้นออนไลน์ — ✅ ขึ้นแล้ว
 
-SQLite เหมาะกับเครื่องเดียว — สำหรับทีมใช้พร้อมกันแนะนำ PostgreSQL (Supabase/Neon) + Vercel
-แนวทาง deploy + Vercel Cron อยู่ระหว่างจัดทำ (รอบถัดไป)
+Production: **https://crm-web-tawny-iota.vercel.app** (Vercel + PostgreSQL บน Supabase)
+
+- ฐานข้อมูล PostgreSQL (Supabase) — ตั้ง `DATABASE_URL` (pooled 6543) + `DIRECT_URL` (5432)
+- แจ้งเตือนสรุปตามเวลาใช้ **Vercel Cron** (ดู `vercel.json` — เวลาเป็น UTC)
+- ตั้ง Environment Variables บน Vercel: `DATABASE_URL`, `DIRECT_URL`, `SESSION_SECRET`, `CRON_SECRET`, `TELEGRAM_BOT_TOKEN`
+- seed ข้อมูลขึ้น cloud: `npm run db:push && npm run db:seed`
 
 ---
 
