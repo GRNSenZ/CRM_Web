@@ -20,6 +20,8 @@ model User {
   email         String?    @unique
   emailVerified Boolean    @default(false)
   active        Boolean    @default(true)
+  failedLogins  Int        @default(0) // นับครั้งที่ใส่รหัสผิดติดกัน
+  lockedUntil   DateTime? // ล็อกบัญชีถึงเวลานี้ (null = ไม่ล็อก)
   createdById   Int? // ใครเป็นคนสร้างบัญชีนี้ (null = สมัครเองหน้าเว็บ)
   createdBy     User?      @relation("UserCreator", fields: [createdById], references: [id])
   createdUsers  User[]     @relation("UserCreator")
@@ -28,6 +30,28 @@ model User {
   statusChanges StatusChangeLog[]
   auditLogs     AuditLog[]
   smsBatches    SmsBatch[]
+  importLogs    ImportLog[]
+}
+
+/// ประวัติการนำเข้าข้อมูล (แต่ละครั้งที่อัปโหลด Excel/Google Sheet)
+model ImportLog {
+  id               Int      @id @default(autoincrement())
+  user             User?    @relation(fields: [userId], references: [id])
+  userId           Int?
+  userName         String // เก็บชื่อไว้เลย เผื่อ user ถูกลบ
+  source           String // "file" | "gsheet"
+  fileName         String?
+  targetBrand      String? // null = อัตโนมัติตามชื่อชีต
+  sheets           Int
+  rows             Int
+  customersCreated Int
+  followUpsAdded   Int
+  bonusesAdded     Int
+  dailyUpserted    Int
+  dncSkipped       Int
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 /// การส่ง SMS หนึ่งครั้ง (ทีละเบอร์/กลุ่ม/อัปโหลดไฟล์)

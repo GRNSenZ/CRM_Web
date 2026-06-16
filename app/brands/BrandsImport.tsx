@@ -14,43 +14,92 @@ type Summary = {
   perBrand: { brand: string; rows: number; customers: number }[];
 };
 
+type Preview = {
+  sheets: number;
+  rows: number;
+  newCustomers: number;
+  perBrand: {
+    brand: string;
+    brandExists: boolean;
+    rows: number;
+    phones: number;
+    newCustomers: number;
+    existingCustomers: number;
+    followUpRows: number;
+    bonusRows: number;
+  }[];
+};
+
+export type ImportHistory = {
+  id: number;
+  userName: string;
+  source: string;
+  fileName: string | null;
+  targetBrand: string | null;
+  customersCreated: number;
+  followUpsAdded: number;
+  rows: number;
+  createdAt: string;
+};
+
 const inputCls =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
 
-export default function BrandsImport({ brands }: { brands: { id: number; name: string }[] }) {
+export default function BrandsImport({
+  brands,
+  history,
+}: {
+  brands: { id: number; name: string }[];
+  history: ImportHistory[];
+}) {
   const [open, setOpen] = useState(false);
-  const [brandId, setBrandId] = useState(""); // "" = อัตโนมัติตามชื่อชีต
+  const [brandId, setBrandId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [sheetUrl, setSheetUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Summary | null>(null);
   const [drag, setDrag] = useState(false);
-  const [confirm, setConfirm] = useState<null | "file" | "url">(null);
+  // โหมดดูตัวอย่างก่อนยืนยัน
+  const [pending, setPending] = useState<null | "file" | "url">(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
 
   const targetName = brandId ? brands.find((b) => String(b.id) === brandId)?.name : null;
 
-  async function runImport(mode: "file" | "url") {
+  // ยิงไป /api/import — preview=true จะ parse อย่างเดียวไม่เขียน DB
+  async function callImport(mode: "file" | "url", isPreview: boolean) {
+    if (mode === "file") {
+      const fd = new FormData();
+      fd.append("file", file!);
+      if (brandId) fd.append("brandId", brandId);
+      if (isPreview) fd.append("preview", "1");
+      return fetch("/api/import", { method: "POST", body: fd });
+    }
+    return fetch("/api/import", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        googleSheetUrl: sheetUrl.trim(),
+        brandId: brandId || undefined,
+        preview: isPreview ? "1" : undefined,
+      }),
+    });
+  }
+
+  async function requestPreview(mode: "file" | "url") {
     setBusy(true);
     setError("");
     setResult(null);
+    setPreview(null);
     try {
-      let res: Response;
-      if (mode === "file") {
-        const fd = new FormData();
-        fd.append("file", file!);
-        if (brandId) fd.append("brandId", brandId);
-        res = await fetch("/api/import", { method: "POST", body: fd });
-      } else {
-        res = await fetch("/api/import", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ googleSheetUrl: sheetUrl.trim(), brandId: brandId || undefined }),
-        });
-      }
+      const res = await callImport(mode, true);
       const data = await res.json();
-      if (!res.ok) setError(data.error ?? "นำเข้าไม่สำเร็จ");
-      else setResult(data.summary);
+      if (!res.ok) {
+        setError(data.error ?? "อ่านไฟล์ไม่สำเร็จ");
+        return;
+      }
+      setPreview(data.preview);
+      setPending(mode); // เปิด modal ตัวอย่าง
     } catch {
       setError("เชื่อมต่อไม่สำเร็จ");
     } finally {
@@ -58,9 +107,26 @@ export default function BrandsImport({ brands }: { brands: { id: number; name: s
     }
   }
 
+  async function confirmImport() {
+    const mode = pending!;
+    setPending(null);
+    setBusy(true);
+    setError("");
+    try {
+      const res = await callImport(mode, false);
+      const data = await res.json();
+      if (!res.ok) setError(data.error ?? "นำเข้าไม่สำเร็จ");
+      else setResult(data.summary);
+    } catch {
+      setError("เชื่อมต่อไม่สำเร็จ");
+    } finally {
+      setBusy(false);
+      setPreview(null);
+    }
+  }
+
   return (
     <div className="mb-8 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200/70">
-      {/* หัวข้อ + ปุ่มพับ/กาง */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-zinc-50"
@@ -120,11 +186,11 @@ export default function BrandsImport({ brands }: { brands: { id: number; name: s
               </span>
             </label>
             <button
-              onClick={() => setConfirm("file")}
+              onClick={() => requestPreview("file")}
               disabled={!file || busy}
               className="mt-3 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
             >
-              {busy ? "กำลังนำเข้า..." : "นำเข้าจากไฟล์"}
+              {busy ? "กำลังอ่านไฟล์..." : "ดูตัวอย่างก่อนนำเข้า"}
             </button>
           </div>
 
@@ -139,11 +205,11 @@ export default function BrandsImport({ brands }: { brands: { id: number; name: s
                 className={inputCls}
               />
               <button
-                onClick={() => setConfirm("url")}
+                onClick={() => requestPreview("url")}
                 disabled={!sheetUrl.trim() || busy}
                 className="shrink-0 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
               >
-                {busy ? "กำลังดึง..." : "นำเข้าจากลิงก์"}
+                {busy ? "กำลังดึง..." : "ดูตัวอย่าง"}
               </button>
             </div>
             <p className="mt-1 text-xs text-zinc-400">ตั้งสิทธิ์ Google Sheet ให้ &ldquo;ผู้ที่มีลิงก์&rdquo; ดูได้ก่อน</p>
@@ -167,49 +233,110 @@ export default function BrandsImport({ brands }: { brands: { id: number; name: s
               <p className="text-xs text-zinc-500">รีเฟรชหน้าเพื่อดูจำนวนลูกค้าที่อัปเดต</p>
             </div>
           )}
+
+          {/* ประวัติการนำเข้า */}
+          {history.length > 0 && (
+            <div className="border-t border-zinc-100 pt-4">
+              <h3 className="mb-2 text-sm font-semibold text-zinc-700">🕘 ประวัติการนำเข้าล่าสุด</h3>
+              <div className="overflow-x-auto rounded-lg ring-1 ring-zinc-100">
+                <table className="w-full text-xs">
+                  <thead className="bg-zinc-50 text-left text-zinc-500">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold">เวลา</th>
+                      <th className="px-3 py-2 font-semibold">โดย</th>
+                      <th className="px-3 py-2 font-semibold">แหล่ง</th>
+                      <th className="px-3 py-2 font-semibold">เว็บ</th>
+                      <th className="px-3 py-2 text-right font-semibold">ลูกค้าใหม่</th>
+                      <th className="px-3 py-2 text-right font-semibold">โทรเพิ่ม</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {history.map((h) => (
+                      <tr key={h.id}>
+                        <td className="whitespace-nowrap px-3 py-2 text-zinc-600">
+                          {new Date(h.createdAt).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}
+                        </td>
+                        <td className="px-3 py-2">{h.userName}</td>
+                        <td className="px-3 py-2">
+                          {h.source === "gsheet" ? "🔗 Sheet" : "📂 " + (h.fileName ?? "ไฟล์")}
+                        </td>
+                        <td className="px-3 py-2">{h.targetBrand ?? "อัตโนมัติ"}</td>
+                        <td className="px-3 py-2 text-right">{h.customersCreated.toLocaleString("th-TH")}</td>
+                        <td className="px-3 py-2 text-right">{h.followUpsAdded.toLocaleString("th-TH")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ป๊อปอัพยืนยันก่อนนำเข้า */}
-      {confirm && (
+      {/* ป๊อปอัพ "ดูตัวอย่าง" ก่อนนำเข้าจริง */}
+      {pending && preview && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setConfirm(null)}
+          onClick={() => !busy && setPending(null)}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-3 flex justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-2xl">📥</div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-2xl">👀</div>
             </div>
-            <h3 className="text-center text-lg font-bold text-zinc-900">ยืนยันการนำเข้าข้อมูล</h3>
-            <div className="mt-3 mb-6 space-y-1 rounded-lg bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-              <p>
-                แหล่งข้อมูล:{" "}
-                <b className="text-zinc-800">
-                  {confirm === "file" ? file?.name : "ลิงก์ Google Sheet"}
-                </b>
-              </p>
-              <p>
-                อัปโหลดลงเว็บ:{" "}
-                <b className="text-indigo-700">{targetName ?? "อัตโนมัติ (ตามชื่อชีต)"}</b>
-              </p>
-              <p className="text-xs text-zinc-400">ระบบจะเพิ่ม/อัปเดตข้อมูล โดยไม่ลบของเดิม</p>
+            <h3 className="text-center text-lg font-bold text-zinc-900">ตรวจสอบก่อนนำเข้า</h3>
+            <p className="mt-1 text-center text-sm text-zinc-500">
+              อัปโหลดลง <b className="text-indigo-700">{targetName ?? "อัตโนมัติ (ตามชื่อชีต)"}</b> ·{" "}
+              {preview.sheets} ชีต · {preview.rows.toLocaleString("th-TH")} แถว ·{" "}
+              <b className="text-green-700">ลูกค้าใหม่ {preview.newCustomers.toLocaleString("th-TH")}</b>
+            </p>
+
+            <div className="my-4 overflow-x-auto rounded-lg ring-1 ring-zinc-200">
+              <table className="w-full text-xs">
+                <thead className="bg-zinc-50 text-left text-zinc-500">
+                  <tr>
+                    <th className="px-2 py-2 font-semibold">เว็บ</th>
+                    <th className="px-2 py-2 text-right font-semibold">แถว</th>
+                    <th className="px-2 py-2 text-right font-semibold">ลูกค้าใหม่</th>
+                    <th className="px-2 py-2 text-right font-semibold">มีอยู่แล้ว</th>
+                    <th className="px-2 py-2 text-right font-semibold">โทร</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {preview.perBrand.map((b, i) => (
+                    <tr key={i}>
+                      <td className="px-2 py-2 font-medium">
+                        {b.brand} {!b.brandExists && <span className="text-amber-600">(ใหม่)</span>}
+                      </td>
+                      <td className="px-2 py-2 text-right">{b.rows.toLocaleString("th-TH")}</td>
+                      <td className="px-2 py-2 text-right font-semibold text-green-700">
+                        +{b.newCustomers.toLocaleString("th-TH")}
+                      </td>
+                      <td className="px-2 py-2 text-right text-zinc-400">{b.existingCustomers.toLocaleString("th-TH")}</td>
+                      <td className="px-2 py-2 text-right">{b.followUpRows.toLocaleString("th-TH")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+            <p className="mb-4 text-center text-xs text-zinc-400">ระบบจะเพิ่ม/อัปเดตข้อมูล โดยไม่ลบของเดิม</p>
+
             <div className="flex gap-3">
               <button
-                onClick={() => setConfirm(null)}
-                className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                onClick={() => setPending(null)}
+                disabled={busy}
+                className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
               >
                 ยกเลิก
               </button>
               <button
-                onClick={() => {
-                  const mode = confirm;
-                  setConfirm(null);
-                  runImport(mode);
-                }}
-                className="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                onClick={confirmImport}
+                disabled={busy}
+                className="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
               >
-                ยืนยันนำเข้า
+                {busy ? "กำลังนำเข้า..." : "ยืนยันนำเข้า"}
               </button>
             </div>
           </div>

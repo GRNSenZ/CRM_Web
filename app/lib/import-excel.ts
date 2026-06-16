@@ -153,6 +153,60 @@ export function parseWorkbook(buf: ArrayBuffer | Buffer): ParsedBrand[] {
   return result;
 }
 
+export type ImportPreview = {
+  sheets: number;
+  rows: number;
+  newCustomers: number;
+  perBrand: {
+    brand: string;
+    brandExists: boolean;
+    rows: number;
+    phones: number;
+    newCustomers: number;
+    existingCustomers: number;
+    followUpRows: number;
+    bonusRows: number;
+  }[];
+};
+
+/** ดูตัวอย่างก่อนนำเข้า — parse แล้วคำนวณว่าจะเข้าเว็บไหน/ใหม่กี่ราย โดยไม่เขียน DB */
+export async function previewParsed(
+  prisma: PrismaClient,
+  parsed: ParsedBrand[],
+): Promise<ImportPreview> {
+  const perBrand: ImportPreview["perBrand"] = [];
+  let rows = 0;
+  let newCustomers = 0;
+
+  for (const b of parsed) {
+    const existingBrand = await prisma.brand.findUnique({ where: { name: b.brand } });
+    const phones = Array.from(new Set(b.rows.map((r) => r.phone)));
+    let existingPhones = new Set<string>();
+    if (existingBrand) {
+      const ex = await prisma.customer.findMany({
+        where: { brandId: existingBrand.id },
+        select: { phone: true },
+      });
+      existingPhones = new Set(ex.map((c) => c.phone));
+    }
+    const newCount = phones.filter((p) => !existingPhones.has(p)).length;
+    perBrand.push({
+      brand: b.brand,
+      brandExists: !!existingBrand,
+      rows: b.rows.length,
+      phones: phones.length,
+      newCustomers: newCount,
+      existingCustomers: phones.length - newCount,
+      followUpRows: b.rows.filter((r) => r.callDate).length,
+      bonusRows: b.rows.filter((r) => r.bonusAmount && r.bonusAmount > 0).length,
+    });
+    rows += b.rows.length;
+    newCustomers += newCount;
+  }
+
+  return { sheets: parsed.length, rows, newCustomers, perBrand };
+}
+
 const keyOf = (parts: (string | number)[]) => parts.join("|");
 
 /** นำข้อมูลที่ parse แล้วเข้าฐานข้อมูลแบบ merge (ไม่ลบของเดิม) */

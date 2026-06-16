@@ -17,6 +17,10 @@ export default async function BrandsPage() {
     include: { _count: { select: { customers: true } } },
   });
 
+  const history = canImport
+    ? await prisma.importLog.findMany({ orderBy: { createdAt: "desc" }, take: 8 })
+    : [];
+
   return (
     <AppShell>
       <header className="mb-6">
@@ -25,7 +29,22 @@ export default async function BrandsPage() {
         <p className="mt-2 text-sm text-zinc-500">เลือกเว็บเพื่อดูรายชื่อลูกค้าและบันทึกการติดตาม</p>
       </header>
 
-      {canImport && <BrandsImport brands={brands.map((b) => ({ id: b.id, name: b.name }))} />}
+      {canImport && (
+        <BrandsImport
+          brands={brands.map((b) => ({ id: b.id, name: b.name }))}
+          history={history.map((h) => ({
+            id: h.id,
+            userName: h.userName,
+            source: h.source,
+            fileName: h.fileName,
+            targetBrand: h.targetBrand,
+            customersCreated: h.customersCreated,
+            followUpsAdded: h.followUpsAdded,
+            rows: h.rows,
+            createdAt: h.createdAt.toISOString(),
+          }))}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
         {brands.map((b) => (

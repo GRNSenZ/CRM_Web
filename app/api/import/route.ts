@@ -1,7 +1,7 @@
 import { prisma } from "@/app/lib/prisma";
 import { getCurrentUser } from "@/app/lib/auth";
 import { canManageUsers } from "@/app/lib/roles";
-import { parseWorkbook, importWorkbook } from "@/app/lib/import-excel";
+import { parseWorkbook, importWorkbook, previewParsed } from "@/app/lib/import-excel";
 import { logAudit } from "@/app/lib/audit";
 import { notifyImport } from "@/app/lib/notify";
 
@@ -30,6 +30,9 @@ export async function POST(request: Request) {
 
   let buf: ArrayBuffer | null = null;
   let brandIdRaw: string | null = null;
+  let source = "file";
+  let fileName: string | null = null;
+  let isPreview = false;
   const contentType = request.headers.get("content-type") ?? "";
 
   try {
@@ -37,6 +40,7 @@ export async function POST(request: Request) {
       const form = await request.formData();
       const file = form.get("file");
       brandIdRaw = form.get("brandId") ? String(form.get("brandId")) : null;
+      isPreview = form.get("preview") === "1";
       if (!file || typeof file === "string") {
         return Response.json({ error: "ไม่พบไฟล์ที่อัปโหลด" }, { status: 400 });
       }
@@ -47,10 +51,14 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      source = "file";
+      fileName = file.name;
       buf = await file.arrayBuffer();
     } else {
       const body = await request.json().catch(() => ({}));
       brandIdRaw = body.brandId != null ? String(body.brandId) : null;
+      isPreview = body.preview === true || body.preview === "1";
+      source = "gsheet";
       const link = String(body.googleSheetUrl ?? "").trim();
       if (!link) return Response.json({ error: "ไม่พบไฟล์หรือลิงก์" }, { status: 400 });
       const exportUrl = googleSheetExportUrl(link);
@@ -77,13 +85,21 @@ export async function POST(request: Request) {
 
     // เลือกเว็บปลายทาง: ถ้าระบุ brandId → บังคับให้ข้อมูลทุกชีตเข้าเว็บนั้น
     // (ไม่ระบุ = อัตโนมัติตามชื่อชีตในไฟล์)
+    let targetBrandName: string | null = null;
     if (brandIdRaw) {
       const brandId = Number(brandIdRaw);
       const brand = Number.isFinite(brandId)
         ? await prisma.brand.findUnique({ where: { id: brandId } })
         : null;
       if (!brand) return Response.json({ error: "ไม่พบเว็บปลายทางที่เลือก" }, { status: 400 });
+      targetBrandName = brand.name;
       for (const p of parsed) p.brand = brand.name;
+    }
+
+    // โหมดดูตัวอย่าง: parse-only ไม่เขียน DB
+    if (isPreview) {
+      const preview = await previewParsed(prisma, parsed);
+      return Response.json({ ok: true, preview });
     }
 
     const summary = await importWorkbook(prisma, parsed);
@@ -100,6 +116,25 @@ export async function POST(request: Request) {
         dncSkipped: summary.dncSkipped,
       },
     });
+    // บันทึกประวัติการนำเข้า
+    await prisma.importLog
+      .create({
+        data: {
+          userId: user.userId,
+          userName: user.name,
+          source,
+          fileName,
+          targetBrand: targetBrandName,
+          sheets: summary.sheets,
+          rows: summary.rows,
+          customersCreated: summary.customersCreated,
+          followUpsAdded: summary.followUpsAdded,
+          bonusesAdded: summary.bonusesAdded,
+          dailyUpserted: summary.dailyUpserted,
+          dncSkipped: summary.dncSkipped,
+        },
+      })
+      .catch(() => {});
     await notifyImport({
       customersCreated: summary.customersCreated,
       followUpsAdded: summary.followUpsAdded,

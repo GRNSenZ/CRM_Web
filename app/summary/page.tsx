@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import AppShell from "@/app/components/AppShell";
 import PeriodFilter from "@/app/components/PeriodFilter";
+import BarChart from "@/app/components/BarChart";
 import { getBrandStats, sumStats } from "@/app/lib/queries";
 import { resolvePeriod } from "@/app/lib/period";
 import { requireUser } from "@/app/lib/auth";
@@ -60,6 +61,22 @@ export default async function SummaryPage(props: PageProps<"/summary">) {
           )}
         </div>
       </header>
+
+      {/* กราฟสรุปรายเว็บ */}
+      <div className="mb-5 grid gap-4 lg:grid-cols-2">
+        <BarChart
+          title="📞 การติดตามรายเว็บ"
+          data={stats.map((s) => ({ label: s.brand, value: s.calls }))}
+          accent="#13213f"
+          unit=" สาย"
+        />
+        <BarChart
+          title="💰 ยอดกลับมาฝากรายเว็บ"
+          data={stats.map((s) => ({ label: s.brand, value: Math.round(s.totalDeposit) }))}
+          accent="#c8a24a"
+          unit=" ฿"
+        />
+      </div>
 
       <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
         <table className="w-full text-sm">
